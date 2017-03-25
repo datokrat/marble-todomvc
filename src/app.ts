@@ -19,6 +19,7 @@ export type Sinks = {
   DOM: StreamAdapter<VNode>
 }
 
+// Install the MarbleEngine stream library adapter
 setAdapt(adaptXstreamToMarble(engine));
 
 export function App (sources: Sources): Sinks {

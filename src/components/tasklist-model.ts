@@ -20,6 +20,11 @@ export default function model(action$: ConvenientStreamBase<Action>) {
     .filter(action => action.type === "updateInputValue")
     .map(action => (prev: TodosData): TodosData => ({...prev, inputValue: action.payload}));
 
+  /* If a reducer exists in one of the merged streams,
+   * use it as reducer.
+   * If no reducer exists, use the identity reducer;
+   * if many exist, use the first one.
+   */
   const reducer$ = engine
     .merge(insertTodoReducer$, updateInputValueReducer$)
     .map(single)
