@@ -5,6 +5,11 @@ import {just} from 'marble-engine/modules/maybe';
 import {Stream} from 'marble-engine/modules/streambase';
 import {setAdapt} from "@cycle/run/lib/adapt";
 import {adaptXstreamToMarble, StreamAdapter, DOMSource} from "./adapt";
+import engine from "./engine";
+
+import model from "./components/tasklist-model";
+import intent from "./components/tasklist-view/intent";
+import view from "./components/tasklist-view/render";
 
 export type Sources = {
   DOM: DOMSource
@@ -14,17 +19,23 @@ export type Sinks = {
   DOM: StreamAdapter<VNode>
 }
 
-const engine = new MarbleEngine();
 setAdapt(adaptXstreamToMarble(engine));
 
 export function App (sources: Sources): Sinks {
 
-  const vtree$ = new SourceStream<VNode>(engine.getClock(), "vtree");
+  const counter$ = new SourceStream<any>(engine.getClock(), "never")
+    .map(ev => 1)
+    .fold(prev => prev + 1, 0);
+
+  const intent$ = intent(engine, sources);
+  const model$ = model(intent$);
+  const view$ = view(model$);
+
   const sinks = {
-    DOM: new StreamAdapter(vtree$)
+    DOM: new StreamAdapter(view$)
   }
 
-  setTimeout(() => engine.nextTick(() => vtree$.setValue(just(div('My Awesome Cycle.js app')))), 1000);
+  setTimeout(() => engine.nextTick(() => {}));
 
   return sinks
 }

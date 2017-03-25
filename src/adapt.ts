@@ -1,7 +1,7 @@
 import xs, {Observable as XObservable, Listener, Subscription} from "xstream";
-import {MarbleEngine, SourceStream} from "marble-engine";
+import {MarbleEngine, SourceStream, ConvenientStreamBase as Stream} from "marble-engine";
 import {Maybe, isJust, just} from "marble-engine/modules/maybe";
-import {Observable as MObservable, Stream} from "marble-engine/modules/streambase";
+import {Observable as MObservable} from "marble-engine/modules/streambase";
 
 export class StreamAdapter<T> implements XObservable<T> {
   constructor(private stream: Stream<T>) {}
