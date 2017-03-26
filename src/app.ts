@@ -7,9 +7,9 @@ import {setAdapt} from "@cycle/run/lib/adapt";
 import {adaptXstreamToMarble, StreamAdapter, DOMSource} from "./adapt";
 import engine from "./engine";
 
-import model from "./components/tasklist-model";
-import intent from "./components/tasklist-view/intent";
-import view from "./components/tasklist-view/render";
+import taskListModel from "./components/tasklist-model";
+import taskListIntent from "./components/tasklist-view/intent";
+import taskListView from "./components/tasklist-view/render";
 
 export type Sources = {
   DOM: DOMSource
@@ -24,16 +24,11 @@ setAdapt(adaptXstreamToMarble(engine));
 
 export function App (sources: Sources): Sinks {
 
-  const counter$ = new SourceStream<any>(engine.getClock(), "never")
-    .map(ev => 1)
-    .fold(prev => prev + 1, 0);
-
-  const intent$ = intent(engine, sources);
-  const model$ = model(intent$);
-  const view$ = view(model$);
+  const taskList = taskListModel(taskListIntent(sources));
+  const tasListView$ = taskListView(taskListModel$);
 
   const sinks = {
-    DOM: new StreamAdapter(view$)
+    DOM: new StreamAdapter(tasListView$)
   }
 
   setTimeout(() => engine.nextTick(() => {}));

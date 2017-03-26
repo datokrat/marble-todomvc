@@ -2,8 +2,9 @@ import {ConvenientStreamBase, MarbleEngine} from 'marble-engine';
 import {collect, flattenArrays} from '../../marbleutils';
 import {Action, Sources, Intent} from "../tasklist-contract";
 import {ENTER_KEY} from "../../utils";
+import engine from "../../engine";
 
-const intent: Intent = (engine, sources) => {
+const intent: Intent = sources => {
   const domSource = sources.DOM;
 
   // ENTER KEY STREAM

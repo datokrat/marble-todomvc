@@ -1,8 +1,8 @@
 import {button, div, input, label, li} from '@cycle/dom';
 import {ConvenientStreamBase} from "marble-engine";
-import {State} from "./task-contract";
+import {State, View} from "../task-contract";
 
-function view(state$: ConvenientStreamBase<State>) {
+const view: View = (state$: ConvenientStreamBase<State>) => {
   return state$.map(({title, completed, editing}) => {
     let todoRootClasses = {
       completed,
