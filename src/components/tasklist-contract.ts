@@ -32,4 +32,12 @@ export interface Sources {
   DOM: DOMSource;
 }
 
+export interface ModelOut {
+  inputValue: ConvenientStreamBase<string>;
+  list: ArrayStream<TodoItemAction>;
+  filter: ConvenientStreamBase<string>;
+  filterFn: ConvenientStreamBase<() => boolean>;
+}
+
 export type Intent = (sources: Sources) => ConvenientStreamBase<Action>;
+export type Model = (intent: ConvenientStreamBase<Action>) => ModelOut;

@@ -30,7 +30,11 @@ export interface TodoItemAction extends ItemAction<TodoItemAction> {
   readonly title: string;
 }
 
+export interface TaskWithDom {
+  state: State, vtree: VNode
+}
+
 export type Intent = (sources: Sources) => ConvenientStreamBase<Action>;
 export type Model = (intent$: ConvenientStreamBase<Action>, title: string) => ConvenientStreamBase<State>;
-export type View = (state: ConvenientStreamBase<State>) => ConvenientStreamBase<VNode>;
+export type View = (state: State) => VNode;
 export type Task = (model: Model, view: View, intent: Intent) => (sources: Sources, title: string) => Sinks;

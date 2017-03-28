@@ -1,10 +1,21 @@
-import {Maybe, Just, isJust, just} from "marble-engine/modules/maybe";
-import {ConvenientStreamBase} from "marble-engine";
+import {Maybe, Just, isJust, just, nothing, valueOrNull} from "marble-engine/modules/maybe";
+import {ConvenientStreamBase, MarbleEngine} from "marble-engine";
 
 export function collect<T>(merged: Maybe<T>[]) {
   return merged
     .filter(isJust)
     .map((item: Just<T>) => item.value);
+}
+
+export function combineWith<U>(second$: ConvenientStreamBase<U>) {
+  return <T>(first$: ConvenientStreamBase<T>) => first$
+    .mergeWith(second$)
+    .fold<[Maybe<T>, Maybe<U>]>((prev, curr) => [
+      isJust(curr[0]) ? curr[0] : prev[0],
+      isJust(curr[1]) ? curr[1] : prev[1],
+    ], [nothing(), nothing()])
+    .filter(x => isJust(x[0]) && isJust(x[1]))
+    .map(([t, u]: [Just<T>, Just<U>]): [T, U] => [t.value, u.value]);
 }
 
 export function flattenArrays<T>(arrays: T[][]) {
@@ -33,37 +44,32 @@ export interface ItemAction<T extends ItemAction<T>> {
 export interface ItemState<A, T extends ItemState<A, T>> {
   change(action: A): ItemState<A, T>;
 }
-/**
- * Creates a new list item 
- */
-export type ItemCreator<T, A> = (action: A | null) => T;
-export type ArrayReducer<A> = <T extends ItemState<A, T>>(create: ItemCreator<T, A>, prev: T[]) => T[];
+
+export type ItemCreator<T, A> = (props: ItemProps<A>) => T;
+export type ArrayReducer<A> = <T>(create: ItemCreator<T, A>, prev: T[]) => T[];
 export type ArrayStream<A> = <T>(create: ItemCreator<T, A>) => ConvenientStreamBase<T[]>;
+export type ItemProps<A> = { action$: ConvenientStreamBase<A>; initial: A };
 
-export function array<A extends ItemAction<A>>(reducer$: ConvenientStreamBase<ArrayReducer<A>>, initial: (A | null)[]): ArrayStream<A> {
-  function createActionContainer(action: A | null) {
-    return new ActionContainer(action);
-  }
+export function array<A extends ItemAction<A>>(engine: MarbleEngine, reducer$: ConvenientStreamBase<ArrayReducer<A>>, initial: ItemProps<A>[]): ArrayStream<A> {
+  const cache$ = reducer$
+    .fold((prev, reducer) => reducer(toCachedProps, prev), initial.map(toCachedProps))
+    .map(props => props.map(prop => prop.initial$
+      .map(initial => ({ initial, action$: prop.action$ }))))
+    .map(bindThis(engine.mergeArray, engine))
+    .flatten()
+    .map(collect);
 
-  function createFromContainer<T extends ItemState<A, T>>(create: ItemCreator<T, A>) {
-    return (c: ActionContainer<A>) => create(c.get());
-  }
-
-  const action$ = reducer$
-    .fold((prev, reducer) => reducer(createActionContainer, prev), initial.map(createActionContainer));
-
-  return <T extends ItemState<A, T>>(create: ItemCreator<T, A>) => reducer$
-    .branchFold((prev, curr) => curr(create, prev), action$.map(containers => containers.map(createFromContainer(create))));
+  return <T>(create: ItemCreator<T, A>) => reducer$
+    .branchFold((prev, reducer) => reducer(create, prev), cache$.map(cache => cache.map(props => create(props))));
 }
 
-class ActionContainer<A extends ItemAction<A>> implements ItemState<A, ActionContainer<A>> {
-  constructor(private readonly action: A | null) {}
+function bindThis<F extends Function>(fn: F, thisArg: any): F {
+  return fn.bind(thisArg);
+}
 
-  public change(action: A) {
-    return new ActionContainer(this.action !== null ? this.action.change(action) : action);
-  }
-
-  public get() {
-    return this.action;
-  }
+function toCachedProps<A extends ItemAction<A>>(initialProps: ItemProps<A>) {
+  return {
+    initial$: initialProps.action$.fold((prev, curr) => prev.change(curr), initialProps.initial),
+    action$: initialProps.action$
+  };
 }

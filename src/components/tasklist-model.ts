@@ -1,7 +1,7 @@
 import {ConvenientStreamBase} from "marble-engine";
-import {Action, TodosData, TodoItem} from "./tasklist-contract";
+import {Action, TodosData, TodoItem, ModelOut} from "./tasklist-contract";
 import {TodoItemAction} from "./task-contract";
-import {task} from "./task";
+// import {task} from "./task";
 
 import {model as taskModel} from "./task-model";
 import taskView from "./task-view/render";
@@ -11,7 +11,7 @@ import engine from "../engine";
 import {single, nullToDefault, identity, apply, array, ArrayReducer, ItemCreator, ItemAction} from "../marbleutils";
 import {span} from "@cycle/dom"
 
-const newTask = task(taskModel, taskView, taskIntent);
+// const newTask = task(taskModel, taskView, taskIntent);
 
 export class TodoItemActionImpl implements ItemAction<TodoItemAction> {
   constructor(public readonly title: string) {}
@@ -21,13 +21,20 @@ export class TodoItemActionImpl implements ItemAction<TodoItemAction> {
   }
 }
 
-export default function model(action$: ConvenientStreamBase<Action>) {
+export default function model(action$: ConvenientStreamBase<Action>): ModelOut {
+
+  function createTodo<T>(create: ItemCreator<T, TodoItemAction>, title: string) {
+    return create({
+      initial: new TodoItemActionImpl(title),
+      action$: engine.never(),
+    });
+  }
 
   const listReducer$: ConvenientStreamBase<ArrayReducer<TodoItemAction>> = action$
     .filter(action => action.type === "insertTodo")
-    .map(action => <T>(create: ItemCreator<T, TodoItemAction>, prev: T[]) => [...prev, create(new TodoItemActionImpl(action.payload))]);
-  const list$ = array(listReducer$, []);
-  // FIXME
+    .map(action => <T>(create: ItemCreator<T, TodoItemAction>, prev: T[]) => [...prev, createTodo(create, action.payload)]);
+  const list = array(engine, listReducer$, []);
+
   const insertTodoReducer$ = action$
     .filter(action => action.type === "insertTodo")
     .map(action => (prev: string): string => '');
@@ -36,7 +43,8 @@ export default function model(action$: ConvenientStreamBase<Action>) {
     .filter(action => action.type === "updateInputValue")
     .map(action => (prev: string): string => action.payload);
 
-  /* If a reducer exists in one of the merged streams,
+  /*
+   * If a reducer exists in one of the merged streams,
    * use it as reducer.
    * If no reducer exists, use the identity reducer;
    * if many exist, use the first one.
@@ -49,7 +57,7 @@ export default function model(action$: ConvenientStreamBase<Action>) {
 
   return {
     inputValue: inputValue$,
-    list: list$,
+    list: list,
     filter: engine.constantly(''),
     filterFn: engine.constantly(() => true)
   };

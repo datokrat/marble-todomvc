@@ -1,6 +1,6 @@
 import {Task} from "./task-contract";
 
-export const task: Task = (model, view, intent) => (sources, title) => {
+/*export const task: Task = (model, view, intent) => (sources, title) => {
   const state$ = model(intent(sources), title);
   const vtree$ = view(state$);
 
@@ -8,4 +8,4 @@ export const task: Task = (model, view, intent) => (sources, title) => {
     DOM: vtree$,
     state: state$
   };
-};
+}; FIXME */

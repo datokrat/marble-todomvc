@@ -2,22 +2,23 @@ import {VNode, a, button, div, footer, h1, header, input, li,
         section, span, strong, ul} from '@cycle/dom';
 import {ConvenientStreamBase} from 'marble-engine';
 import {Just, Nothing, valueOrNull} from 'marble-engine/modules/maybe';
-import {TodosData} from "../tasklist-contract"
+import {State, TaskWithDom} from "../task-contract"
+import {TodosData, ModelOut} from "../tasklist-contract"
 import engine from "../../engine";
-import {collect} from "../../marbleutils";
+import {collect, combineWith} from "../../marbleutils";
 
-export default function view(todosData$: ConvenientStreamBase<TodosData>) {
+export default function view(model: ModelOut, items$: ConvenientStreamBase<TaskWithDom[]>) {
 
   return engine.merge(
-    renderHeader(todosData$),
-    renderMainSection(todosData$),
-    renderFooter(todosData$))
+    renderHeader(model),
+    renderMainSection(model, items$),
+    renderFooter(model, items$))
 
     .map(sections => div(sections.map(valueOrNull)));
 }
 
-function renderHeader(todoData$: ConvenientStreamBase<TodosData>) {
-  return todoData$.map(todoData => header('.header', [
+function renderHeader(model: ModelOut) {
+  return model.inputValue.map(inputValue => header('.header', [
     h1('todos'),
     input('.new-todo', {
       props: {
@@ -25,73 +26,65 @@ function renderHeader(todoData$: ConvenientStreamBase<TodosData>) {
         placeholder: 'What needs to be done?',
         autofocus: true,
         name: 'newTodo',
-        value: todoData.inputValue
+        value: inputValue
       },
-      /*hook: {
-        update: (oldVNode: any, {elm}: {elm: any}) => {
-          elm.value = '';
-        },
-      },*/
     })
   ]));
 }
 
-function renderMainSection(todosData$: ConvenientStreamBase<TodosData>) {
-  return todosData$.map(todosData => {
-    const itemDOMs$ = engine
-      .mergeArray(todosData.list.filter(todosData.filterFn).map(data => data.todoItem.DOM))
-      .map(collect);
-    const allCompleted = todosData.list.reduce((x: any, y: any) => x && y.completed, true);
-    const sectionStyle = {'display': todosData.list.length ? '' : 'none'};
+function renderMainSection(model: ModelOut, items$: ConvenientStreamBase<TaskWithDom[]>) {
+  return model.filterFn
+    .compose(combineWith(items$))
+    .map(([filterFn, items]) => {
+      const viewedItemVtrees = items
+        .filter(filterFn)
+        .map(item => item.vtree);
 
-    return itemDOMs$.map(doms => section('.main', {style: sectionStyle}, [
-      input('.toggle-all', {
-        props: {type: 'checkbox', checked: allCompleted},
-      }),
-      ul('.todo-list', doms)
-    ]));
-  }).flatten();
+      const allCompleted = items.reduce((prev, curr) => prev && curr.state.completed, true);
+      const sectionStyle = {'display': items.length !== 0 ? '' : 'none'};
+
+      return section('.main', {style: sectionStyle}, [
+        input('.toggle-all', {
+          props: {type: 'checkbox', checked: allCompleted}
+        }),
+        ul('.todo-list', viewedItemVtrees)
+      ]);
+    });
 }
 
-function renderFilterButton(todosData: TodosData, filterTag: string, path: any, label: any) {
+function renderFilterButton(activeFilterTag: string, filterTag: string, path: any, label: any) {
   return li([
     a({
       props: {href: path},
-      class: {selected: todosData.filter === filterTag}
+      class: {selected: activeFilterTag === filterTag}
     }, label)
   ]);
 }
 
-function renderFooter(todosData$: ConvenientStreamBase<TodosData>) {
-  return todosData$.map(todosData => {
-    const itemStates$ = engine.mergeArray(todosData.list.map(x => x.todoItem.state))
-      .map(collect);
-    const amountCompleted$ = itemStates$
-      .map(items => items.filter(item => item.completed).length);
-    const amountActive$ = amountCompleted$
-      .map(amountCompleted => todosData.list.length - amountCompleted);
+function renderFooter(model: ModelOut, items$: ConvenientStreamBase<TaskWithDom[]>) {
+  return model.filter
+    .compose(combineWith(items$))
+    .map(([filter, items]) => {
+      const itemStates = items.map(x => x.state);
+      const amountCompleted = itemStates.filter(item => item.completed).length;
+      const amountActive = items.length - amountCompleted;
 
-    const footerStyle = {'display': todosData.list.length ? '' : 'none'};
+      const footerStyle = {'display': items.length !== 0 ? '' : 'none'};
 
-    return amountCompleted$
-      .mergeWith(amountActive$)
-      .map(collect)
-      .map(([amountCompleted, amountActive]) =>
-        footer('.footer', {style: footerStyle}, [
-          span('.todo-count', [
-            strong(String(amountActive)),
-            ' item' + (amountActive !== 1 ? 's' : '') + ' left'
-          ]),
-          ul('.filters', [
-            renderFilterButton(todosData, '', '/', 'All'),
-            renderFilterButton(todosData, 'active', '/active', 'Active'),
-            renderFilterButton(todosData, 'completed', '/completed', 'Completed'),
-          ]),
-          (amountCompleted > 0 ?
-            button('.clear-completed', 'Clear completed (' + amountCompleted + ')')
-            : null
-          )
-        ])
-      );
-  }).flatten();
+      return footer('.footer', {style: footerStyle}, [
+        span('.todo-count', [
+          strong(String(amountActive)),
+          ' item' + (amountActive !== 1 ? 's' : '') + ' left'
+        ]),
+        ul('.filters', [
+          renderFilterButton(filter, '', '/', 'All'),
+          renderFilterButton(filter, 'active', '/active', 'Active'),
+          renderFilterButton(filter, 'completed', '/completed', 'Completed'),
+        ]),
+        (amountCompleted > 0 ?
+          button('.clear-completed', 'Clear completed (' + amountCompleted + ')')
+          : null
+        )
+      ]);
+    });
 }
