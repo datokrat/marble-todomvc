@@ -1,4 +1,4 @@
-import {ConvenientStreamBase} from "marble-engine";
+import {Stream} from "marble-engine";
 import {VNode} from "@cycle/dom";
 import {DOMSource} from "../adapt";
 import {ItemAction} from "../marbleutils";
@@ -11,13 +11,13 @@ export interface State {
 
 export interface Sources {
   DOM: DOMSource;
-  action$: ConvenientStreamBase<TodoItemAction>;
+  action$: Stream<TodoItemAction>;
 }
 
 export interface Sinks {
-  DOM: ConvenientStreamBase<VNode>;
-  state: ConvenientStreamBase<State>;
-  action: ConvenientStreamBase<OutputAction>;
+  DOM: Stream<VNode>;
+  state: Stream<State>;
+  action: Stream<OutputAction>;
 }
 
 export enum ActionType {
@@ -41,8 +41,8 @@ export interface TaskWithDom {
 }
 
 export interface ModelOut {
-  state$: ConvenientStreamBase<State>;
-  action$: ConvenientStreamBase<OutputAction>;
+  state$: Stream<State>;
+  action$: Stream<OutputAction>;
 }
 
 export type Action = OutputAction;
@@ -51,7 +51,7 @@ export type OutputAction = {
   type: ActionType.REMOVE_TODO;
 };
 
-export type Intent = (sources: Sources) => ConvenientStreamBase<Action>;
-export type Model = (intent$: ConvenientStreamBase<Action>, title: string) => ModelOut;
+export type Intent = (sources: Sources) => Stream<Action>;
+export type Model = (intent$: Stream<Action>, title: string) => ModelOut;
 export type View = (state: State) => VNode;
 export type Task = (model: Model, view: View, intent: Intent) => (sources: Sources, title: string) => Sinks;

@@ -1,5 +1,5 @@
-import {Maybe, Just, isJust, just, nothing, valueOrNull} from "marble-engine/modules/maybe";
-import {ConvenientStreamBase, MarbleEngine} from "marble-engine";
+import {Maybe, Just, isJust, just, nothing, valueOrNull} from "marble-engine";
+import {Stream, MarbleEngine} from "marble-engine";
 
 export function collect<T>(merged: Maybe<T>[]) {
   return merged
@@ -7,8 +7,8 @@ export function collect<T>(merged: Maybe<T>[]) {
     .map((item: Just<T>) => item.value);
 }
 
-export function combineWith<U>(second$: ConvenientStreamBase<U>) {
-  return <T>(first$: ConvenientStreamBase<T>) => first$
+export function combineWith<U>(second$: Stream<U>) {
+  return <T>(first$: Stream<T>) => first$
     .mergeWith(second$)
     .fold<[Maybe<T>, Maybe<U>]>((prev, curr) => [
       isJust(curr[0]) ? curr[0] : prev[0],
@@ -18,14 +18,23 @@ export function combineWith<U>(second$: ConvenientStreamBase<U>) {
     .map(([t, u]: [Just<T>, Just<U>]): [T, U] => [t.value, u.value]);
 }
 
+export function combine<T, U>(engine: MarbleEngine, $s: [Stream<T>, Stream<U>]): Stream<[T, U]>;
+export function combine<T>(engine: MarbleEngine, $s: Stream<T>[], debugString?: string): Stream<T[]>;
+export function combine<T>(engine: MarbleEngine, $s: Stream<T>[], debugString?: string) {
+  return engine.mergeArray($s, debugString).map(collect); // TODO
+}
+
 export function flattenArrays<T>(arrays: T[][]) {
   let flattened: T[] = [];
   arrays.forEach(array => flattened = [...flattened, ...array]);
   return flattened;
 }
 
-export function single<T>(merged: Maybe<T>[]): T | null {
-  return nullToDefault(just<T | null>(null))(merged.find(isJust) as Just<T>).value;
+export function single<T>(merged$: Stream<Maybe<T>[]>): Stream<T> {
+  return merged$
+    .map(merged => merged.find(isJust) as Just<T>)
+    .filter(single => single !== undefined)
+    .map(single => single.value);
 }
 
 export function nullToDefault<T>(defaultValue: T) {
@@ -47,12 +56,12 @@ export interface ItemState<A, T extends ItemState<A, T>> {
 
 export type ItemCreator<T, A> = (props: ItemProps<A>) => T;
 export type ArrayReducer<A> = <T>(create: ItemCreator<T, A>, prev: T[]) => T[];
-export type ArrayStream<A> = <T>(create: ItemCreator<T, A>) => ConvenientStreamBase<T[]>;
-export type ItemProps<A> = { action$: ConvenientStreamBase<A>; initial: A };
+export type ArrayStream<A> = <T>(create: ItemCreator<T, A>) => Stream<T[]>;
+export type ItemProps<A> = { action$: Stream<A>; initial: A };
 
 export function array<A extends ItemAction<A>>(
   engine: MarbleEngine,
-  reducer$: ConvenientStreamBase<ArrayReducer<A>>,
+  reducer$: Stream<ArrayReducer<A>>,
   initial: ItemProps<A>[]): ArrayStream<A> {
 
   const cache$ = reducer$

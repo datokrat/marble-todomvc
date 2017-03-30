@@ -1,13 +1,13 @@
 import {VNode, a, button, div, footer, h1, header, input, li,
         section, span, strong, ul} from '@cycle/dom';
-import {ConvenientStreamBase} from 'marble-engine';
+import {Stream} from 'marble-engine';
 import {Just, Nothing, valueOrNull} from 'marble-engine/modules/maybe';
 import {State, TaskWithDom} from "../task-contract"
 import {TodosData, ModelOut} from "../tasklist-contract"
 import engine from "../../engine";
 import {collect, combineWith} from "../../marbleutils";
 
-export default function view(model: ModelOut, items$: ConvenientStreamBase<TaskWithDom[]>) {
+export default function view(model: ModelOut, items$: Stream<TaskWithDom[]>) {
 
   return engine.merge(
     renderHeader(model),
@@ -32,7 +32,7 @@ function renderHeader(model: ModelOut) {
   ]));
 }
 
-function renderMainSection(model: ModelOut, items$: ConvenientStreamBase<TaskWithDom[]>) {
+function renderMainSection(model: ModelOut, items$: Stream<TaskWithDom[]>) {
   return model.filterFn
     .compose(combineWith(items$))
     .map(([filterFn, items]) => {
@@ -61,7 +61,7 @@ function renderFilterButton(activeFilterTag: string, filterTag: string, path: an
   ]);
 }
 
-function renderFooter(model: ModelOut, items$: ConvenientStreamBase<TaskWithDom[]>) {
+function renderFooter(model: ModelOut, items$: Stream<TaskWithDom[]>) {
   return model.filter
     .compose(combineWith(items$))
     .map(([filter, items]) => {

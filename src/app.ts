@@ -1,13 +1,11 @@
-import {VNode, div} from '@cycle/dom'
-import xs from 'xstream'
-import {MarbleEngine, SourceStream} from 'marble-engine'
-import {just} from 'marble-engine/modules/maybe';
-import {Stream} from 'marble-engine/modules/streambase';
+import {VNode, div} from '@cycle/dom';
+import xs from 'xstream';
+import {MarbleEngine, SourceStream, just} from 'marble-engine';
 import {setAdapt} from "@cycle/run/lib/adapt";
 import isolate from "@cycle/isolate";
 import {adaptXstreamToMarble, StreamAdapter, DOMSource} from "./adapt";
 import engine from "./engine";
-import {collect, combineWith} from "./marbleutils";
+import {collect, combineWith, combine} from "./marbleutils";
 
 import taskListModel from "./components/tasklist-model";
 import taskListIntent from "./components/tasklist-view/intent";
@@ -38,11 +36,10 @@ export function App (sources: Sources): Sinks {
 
   const tasks$ = taskList.list(props => Task({ DOM: sources.DOM, action$: props.action$ }, props.initial.title));
   const taskViews$ = tasks$
-    .map(t => engine.mergeArray(t
-      .map(x => x.state.compose(combineWith(x.DOM)))
-      .map(x => x.map(([state, vtree]) => ({ state, vtree }))), "mergeTasks"))
-    .flatten()
-    .map(collect);
+    .map(t => combine(engine, t
+      .map(x => combine(engine, [x.state, x.DOM])
+        .map(([state, vtree]) => ({ state, vtree })))))
+    .flatten();
 
   const taskListView$ = taskListView(taskList, taskViews$);
 
@@ -51,14 +48,14 @@ export function App (sources: Sources): Sinks {
       .map((task, i) => task.action
         .filter(a => a.type === TaskActionType.REMOVE_TODO)
         .map(a => i)))
-    .map(x => engine.mergeArray(x))
-    .switch()
-    .map(collect));
+    .map(remove$s => combine(engine, remove$s))
+    .switch()); // Always use switch instead of flatten when short-circuiting streams via imitate
 
   const sinks = {
     DOM: new StreamAdapter(taskListView$)
   }
 
+  // Flood the first tick after drivers subscribed to sinks
   setTimeout(() => engine.nextTick(() => {}));
 
   return sinks

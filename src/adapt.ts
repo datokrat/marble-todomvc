@@ -1,5 +1,5 @@
 import xs, {Observable as XObservable, Listener, Subscription} from "xstream";
-import {MarbleEngine, SourceStream, ConvenientStreamBase as Stream} from "marble-engine";
+import {MarbleEngine, SourceStream, Stream} from "marble-engine";
 import {Maybe, isJust, just} from "marble-engine/modules/maybe";
 import {Observable as MObservable} from "marble-engine/modules/streambase";
 

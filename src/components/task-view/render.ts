@@ -1,5 +1,5 @@
 import {button, div, input, label, li} from '@cycle/dom';
-import {ConvenientStreamBase} from "marble-engine";
+import {Stream} from "marble-engine";
 import {State, View} from "../task-contract";
 
 const view: View = ({title, completed, editing}: State) => {

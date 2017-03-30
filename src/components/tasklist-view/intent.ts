@@ -1,5 +1,5 @@
-import {ConvenientStreamBase, MarbleEngine} from 'marble-engine';
-import {collect, flattenArrays} from '../../marbleutils';
+import {Stream, MarbleEngine} from 'marble-engine';
+import {collect, single} from '../../marbleutils';
 import {Action, Sources, Intent} from "../tasklist-contract";
 import {ENTER_KEY} from "../../utils";
 import engine from "../../engine";
@@ -28,14 +28,15 @@ const intent: Intent = sources => {
     .map(ev => ev.target['value'])
     .map((payload: any): Action => ({type: 'updateInputValue', payload}));
 
-  return engine.merge<Action[]>(
-      insertTodoAction$.map(wrapIntoArray),
-      updateInputValueAction$.map(wrapIntoArray),
-      removeTodosAction$.map(wrapIntoArray)) // <-- this line breaks it!
-    .map(collect)
-    .map(flattenArrays)
-    .filter(x => x.length > 0)
-    .map(x => x[0]);
+  // When actions appear, pass only the first one.
+  // It would also be possible to work with a list of actions
+  // but then we would have to adapt the reducer to concurrent
+  // insert and remove events.
+  return engine.merge<Action>(
+      insertTodoAction$,
+      updateInputValueAction$,
+      removeTodosAction$)
+    .compose(single);
 };
 export default intent;
 

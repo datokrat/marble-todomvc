@@ -1,14 +1,14 @@
 import {VNode} from "@cycle/dom";
-import {ConvenientStreamBase, MarbleEngine} from "marble-engine";
+import {Stream, MarbleEngine} from "marble-engine";
 import {DOMSource} from "../adapt";
 import {Sinks as TaskSinks, TodoItemAction} from "./task-contract";
 import {ArrayStream, ItemState, ItemAction} from "../marbleutils";
 
 export interface State {
-  inputValue: ConvenientStreamBase<string>;
+  inputValue: Stream<string>;
   list: ArrayStream<TodoItemAction>;
-  filter: ConvenientStreamBase<string>;
-  filterFn: ConvenientStreamBase<() => boolean>;
+  filter: Stream<string>;
+  filterFn: Stream<() => boolean>;
 }
 
 export interface TodosData {
@@ -30,15 +30,15 @@ export interface Action {
 
 export interface Sources {
   DOM: DOMSource;
-  remove$: ConvenientStreamBase<number[]>;
+  remove$: Stream<number[]>;
 }
 
 export interface ModelOut {
-  inputValue: ConvenientStreamBase<string>;
+  inputValue: Stream<string>;
   list: ArrayStream<TodoItemAction>;
-  filter: ConvenientStreamBase<string>;
-  filterFn: ConvenientStreamBase<() => boolean>;
+  filter: Stream<string>;
+  filterFn: Stream<() => boolean>;
 }
 
-export type Intent = (sources: Sources) => ConvenientStreamBase<Action>;
-export type Model = (intent: ConvenientStreamBase<Action>) => ModelOut;
+export type Intent = (sources: Sources) => Stream<Action>;
+export type Model = (intent: Stream<Action>) => ModelOut;

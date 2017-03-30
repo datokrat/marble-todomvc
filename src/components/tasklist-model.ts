@@ -1,12 +1,13 @@
-import {ConvenientStreamBase} from "marble-engine";
+import {Stream} from "marble-engine";
+import {single, apply, array, ArrayReducer, ItemCreator} from "../marbleutils";
+import engine from "../engine";
+
 import {Action, TodosData, TodoItem, ModelOut} from "./tasklist-contract";
 import {TodoItemAction} from "./task-contract";
 
-import engine from "../engine";
-import {single, nullToDefault, identity, apply, array, ArrayReducer, ItemCreator, ItemAction} from "../marbleutils";
 import {span} from "@cycle/dom"
 
-export default function model(action$: ConvenientStreamBase<Action>): ModelOut {
+export default function model(action$: Stream<Action>): ModelOut {
 
   function createTodo<T>(create: ItemCreator<T, TodoItemAction>, title: string) {
     return create({
@@ -15,8 +16,7 @@ export default function model(action$: ConvenientStreamBase<Action>): ModelOut {
     });
   }
 
-  // FIXME
-  const listReducer2$: ConvenientStreamBase<ArrayReducer<TodoItemAction>> = action$
+  const listReducer$: Stream<ArrayReducer<TodoItemAction>> = action$
     .map(action => {
       switch (action.type) {
         case "insertTodo":
@@ -27,11 +27,7 @@ export default function model(action$: ConvenientStreamBase<Action>): ModelOut {
           return <T>(create: ItemCreator<T, TodoItemAction>, prev: T[]) => prev;
       }
     });
-
-  const listReducer$: ConvenientStreamBase<ArrayReducer<TodoItemAction>> = action$
-    .filter(action => action.type === "insertTodo")
-    .map(action => <T>(create: ItemCreator<T, TodoItemAction>, prev: T[]) => [...prev, createTodo(create, action.payload)]);
-  const list = array(engine, listReducer2$, []);
+  const list = array(engine, listReducer$, []);
 
   const insertTodoReducer$ = action$
     .filter(action => action.type === "insertTodo")
@@ -49,8 +45,7 @@ export default function model(action$: ConvenientStreamBase<Action>): ModelOut {
    */
   const inputValueReducer$ = engine
     .merge(insertTodoReducer$, updateInputValueReducer$)
-    .map(single)
-    .map(nullToDefault<(x: string) => string>(identity));
+    .compose(single);
   const inputValue$ = inputValueReducer$.fold<string>(apply, '');
 
   return {
