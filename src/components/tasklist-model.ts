@@ -1,39 +1,37 @@
 import {ConvenientStreamBase} from "marble-engine";
 import {Action, TodosData, TodoItem, ModelOut} from "./tasklist-contract";
 import {TodoItemAction} from "./task-contract";
-// import {task} from "./task";
-
-import {model as taskModel} from "./task-model";
-import taskView from "./task-view/render";
-import {intent as taskIntent} from "./task-view/intent";
 
 import engine from "../engine";
 import {single, nullToDefault, identity, apply, array, ArrayReducer, ItemCreator, ItemAction} from "../marbleutils";
 import {span} from "@cycle/dom"
 
-// const newTask = task(taskModel, taskView, taskIntent);
-
-export class TodoItemActionImpl implements ItemAction<TodoItemAction> {
-  constructor(public readonly title: string) {}
-
-  public change(next: TodoItemAction): TodoItemAction {
-    return next;
-  }
-}
-
 export default function model(action$: ConvenientStreamBase<Action>): ModelOut {
 
   function createTodo<T>(create: ItemCreator<T, TodoItemAction>, title: string) {
     return create({
-      initial: new TodoItemActionImpl(title),
+      initial: new TodoItemAction(title),
       action$: engine.never(),
     });
   }
 
+  // FIXME
+  const listReducer2$: ConvenientStreamBase<ArrayReducer<TodoItemAction>> = action$
+    .map(action => {
+      switch (action.type) {
+        case "insertTodo":
+          return <T>(create: ItemCreator<T, TodoItemAction>, prev: T[]) => [...prev, createTodo(create, action.payload)];
+        case "removeTodos":
+          return <T>(create: ItemCreator<T, TodoItemAction>, prev: T[]) => prev.filter((x, i) => action["indices"].indexOf(i) === -1);
+        default:
+          return <T>(create: ItemCreator<T, TodoItemAction>, prev: T[]) => prev;
+      }
+    });
+
   const listReducer$: ConvenientStreamBase<ArrayReducer<TodoItemAction>> = action$
     .filter(action => action.type === "insertTodo")
     .map(action => <T>(create: ItemCreator<T, TodoItemAction>, prev: T[]) => [...prev, createTodo(create, action.payload)]);
-  const list = array(engine, listReducer$, []);
+  const list = array(engine, listReducer2$, []);
 
   const insertTodoReducer$ = action$
     .filter(action => action.type === "insertTodo")

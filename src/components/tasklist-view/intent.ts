@@ -6,6 +6,7 @@ import engine from "../../engine";
 
 const intent: Intent = sources => {
   const domSource = sources.DOM;
+  const remove$ = sources.remove$;
 
   // ENTER KEY STREAM
   // A stream of ENTER key strokes in the `.new-todo` field.
@@ -20,15 +21,19 @@ const intent: Intent = sources => {
     .map((ev: any) => String(ev.target.value).trim())
     .map((payload: any): Action => ({type: 'insertTodo', payload}));
 
+  const removeTodosAction$ = remove$
+    .map(indices => ({type: 'removeTodos', indices}));
+
   const updateInputValueAction$ = domSource.select('.new-todo').events('input')
     .map(ev => ev.target['value'])
     .map((payload: any): Action => ({type: 'updateInputValue', payload}));
 
   return engine.merge<Action[]>(
       insertTodoAction$.map(wrapIntoArray),
-      updateInputValueAction$.map(wrapIntoArray))
-    .map(x => collect(x))
-    .map(x => flattenArrays(x))
+      updateInputValueAction$.map(wrapIntoArray),
+      removeTodosAction$.map(wrapIntoArray)) // <-- this line breaks it!
+    .map(collect)
+    .map(flattenArrays)
     .filter(x => x.length > 0)
     .map(x => x[0]);
 };

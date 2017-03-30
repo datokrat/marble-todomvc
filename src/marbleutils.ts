@@ -50,7 +50,11 @@ export type ArrayReducer<A> = <T>(create: ItemCreator<T, A>, prev: T[]) => T[];
 export type ArrayStream<A> = <T>(create: ItemCreator<T, A>) => ConvenientStreamBase<T[]>;
 export type ItemProps<A> = { action$: ConvenientStreamBase<A>; initial: A };
 
-export function array<A extends ItemAction<A>>(engine: MarbleEngine, reducer$: ConvenientStreamBase<ArrayReducer<A>>, initial: ItemProps<A>[]): ArrayStream<A> {
+export function array<A extends ItemAction<A>>(
+  engine: MarbleEngine,
+  reducer$: ConvenientStreamBase<ArrayReducer<A>>,
+  initial: ItemProps<A>[]): ArrayStream<A> {
+
   const cache$ = reducer$
     .fold((prev, reducer) => reducer(toCachedProps, prev), initial.map(toCachedProps))
     .map(props => props.map(prop => prop.initial$

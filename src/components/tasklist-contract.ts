@@ -30,6 +30,7 @@ export interface Action {
 
 export interface Sources {
   DOM: DOMSource;
+  remove$: ConvenientStreamBase<number[]>;
 }
 
 export interface ModelOut {
