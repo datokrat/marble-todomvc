@@ -1,4 +1,4 @@
-import {Intent, Action, ActionType} from "../task-contract";
+import {Intent, Action, ActionType} from "./task-contract";
 import engine from "../../engine";
 import {collect, flattenArrays} from "../../marbleutils";
 

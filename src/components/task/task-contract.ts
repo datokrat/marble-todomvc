@@ -1,7 +1,7 @@
 import {Stream} from "marble-engine";
 import {VNode} from "@cycle/dom";
-import {DOMSource} from "../adapt";
-import {ItemAction} from "../marbleutils";
+import {DOMSource} from "../../adapt";
+import {ItemAction} from "../../marbleutils";
 
 export interface State {
   title: string;

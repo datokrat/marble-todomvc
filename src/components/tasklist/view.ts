@@ -2,8 +2,8 @@ import {VNode, a, button, div, footer, h1, header, input, li,
         section, span, strong, ul} from '@cycle/dom';
 import {Stream} from 'marble-engine';
 import {Just, Nothing, valueOrNull} from 'marble-engine/modules/maybe';
-import {State, TaskWithDom} from "../task-contract"
-import {TodosData, ModelOut} from "../tasklist-contract"
+import {State, TaskWithDom} from "../task/task-contract"
+import {ModelOut} from "./tasklist-contract"
 import engine from "../../engine";
 import {collect, combineWith} from "../../marbleutils";
 

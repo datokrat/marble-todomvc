@@ -1,11 +1,11 @@
 import {Stream} from "marble-engine";
-import {single, apply, array, ArrayReducer, ItemCreator} from "../marbleutils";
-import engine from "../engine";
+import {single, apply, array, ArrayReducer, ItemCreator} from "../../marbleutils";
+import engine from "../../engine";
 
-import {Action, TodosData, TodoItem, ModelOut} from "./tasklist-contract";
-import {TodoItemAction} from "./task-contract";
+import {Action, ModelOut} from "./tasklist-contract";
+import {TodoItemAction} from "../task/task-contract";
 
-import {span} from "@cycle/dom"
+import {span} from "@cycle/dom";
 
 export default function model(action$: Stream<Action>): ModelOut {
 

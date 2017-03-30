@@ -1,6 +1,6 @@
 import {button, div, input, label, li} from '@cycle/dom';
 import {Stream} from "marble-engine";
-import {State, View} from "../task-contract";
+import {State, View} from "./task-contract";
 
 const view: View = ({title, completed, editing}: State) => {
   const todoRootClasses = {

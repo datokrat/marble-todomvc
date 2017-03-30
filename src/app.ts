@@ -7,14 +7,14 @@ import {adaptXstreamToMarble, StreamAdapter, DOMSource} from "./adapt";
 import engine from "./engine";
 import {collect, combineWith, combine} from "./marbleutils";
 
-import taskListModel from "./components/tasklist-model";
-import taskListIntent from "./components/tasklist-view/intent";
-import taskListView from "./components/tasklist-view/render";
-import {Sinks as TaskSinks, Sources as TaskSources, ActionType as TaskActionType} from "./components/task-contract";
-import {task} from "./components/task";
-import {model as taskModel} from "./components/task-model";
-import {intent as taskIntent} from "./components/task-view/intent";
-import taskView from "./components/task-view/render";
+import taskListModel from "./components/tasklist/tasklist-model";
+import taskListIntent from "./components/tasklist/intent";
+import taskListView from "./components/tasklist/view";
+import {Sinks as TaskSinks, Sources as TaskSources, ActionType as TaskActionType} from "./components/task/task-contract";
+import {task} from "./components/task/task";
+import {model as taskModel} from "./components/task/task-model";
+import {intent as taskIntent} from "./components/task/intent";
+import taskView from "./components/task/view";
 
 export type Sources = {
   DOM: DOMSource

@@ -1,6 +1,6 @@
 import {Stream, MarbleEngine} from 'marble-engine';
 import {collect, single} from '../../marbleutils';
-import {Action, Sources, Intent} from "../tasklist-contract";
+import {Action, Sources, Intent} from "./tasklist-contract";
 import {ENTER_KEY} from "../../utils";
 import engine from "../../engine";
 
