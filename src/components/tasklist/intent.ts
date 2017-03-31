@@ -1,12 +1,15 @@
 import {Stream, MarbleEngine} from 'marble-engine';
 import {collect, single} from '../../marbleutils';
-import {Action, Sources, Intent} from "./tasklist-contract";
+import {Action, InternalSources, Intent} from "./tasklist-contract";
 import {ENTER_KEY} from "../../utils";
 import engine from "../../engine";
 
 const intent: Intent = sources => {
   const domSource = sources.DOM;
-  const remove$ = sources.remove$;
+  const remove$ = engine
+    .mergeArray(sources.children.map(c => c.action), "todoItemActions")
+    .map(collect)
+    .map(x => x.map((_, index) => index));
 
   // ENTER KEY STREAM
   // A stream of ENTER key strokes in the `.new-todo` field.
@@ -22,7 +25,7 @@ const intent: Intent = sources => {
     .map((payload: any): Action => ({type: 'insertTodo', payload}));
 
   const removeTodosAction$ = remove$
-    .map(indices => ({type: 'removeTodos', indices}));
+    .map((indices): Action => ({type: 'removeTodos', indices}));
 
   const updateInputValueAction$ = domSource.select('.new-todo').events('input')
     .map(ev => ev.target['value'])

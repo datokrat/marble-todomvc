@@ -2,7 +2,7 @@ import {Stream} from "marble-engine";
 import {single, apply, array, ArrayReducer, ItemCreator} from "../../marbleutils";
 import engine from "../../engine";
 
-import {Action, ModelOut} from "./tasklist-contract";
+import {Action, UpdateInputValueAction, ModelOut} from "./tasklist-contract";
 import {TodoItemAction} from "../task/task-contract";
 
 import {span} from "@cycle/dom";
@@ -35,7 +35,7 @@ export default function model(action$: Stream<Action>): ModelOut {
 
   const updateInputValueReducer$ = action$
     .filter(action => action.type === "updateInputValue")
-    .map(action => (prev: string): string => action.payload);
+    .map((action: UpdateInputValueAction) => (prev: string): string => action.payload);
 
   /*
    * If a reducer exists in one of the merged streams,

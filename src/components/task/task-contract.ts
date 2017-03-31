@@ -37,7 +37,8 @@ export class TodoItemAction implements ItemAction<TodoItemAction> {
 }
 
 export interface TaskWithDom {
-  state: State, vtree: VNode
+  state: State;
+  vtree: VNode;
 }
 
 export interface ModelOut {

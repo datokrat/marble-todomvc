@@ -18,7 +18,9 @@ export function combineWith<U>(second$: Stream<U>) {
     .map(([t, u]: [Just<T>, Just<U>]): [T, U] => [t.value, u.value]);
 }
 
-export function combine<T, U>(engine: MarbleEngine, $s: [Stream<T>, Stream<U>]): Stream<[T, U]>;
+export function combine<T, U>(engine: MarbleEngine, $s: [Stream<T>, Stream<U>], debugString?: string): Stream<[T, U]>;
+export function combine<T, U, V>(engine: MarbleEngine, $s: [Stream<T>, Stream<U>, Stream<V>], debugString?: string): Stream<[T, U, V]>;
+export function combine<T, U, V, W>(engine: MarbleEngine, $s: [Stream<T>, Stream<U>, Stream<V>, Stream<W>], debugString?: string): Stream<[T, U, V, W]>;
 export function combine<T>(engine: MarbleEngine, $s: Stream<T>[], debugString?: string): Stream<T[]>;
 export function combine<T>(engine: MarbleEngine, $s: Stream<T>[], debugString?: string) {
   return engine.mergeArray($s, debugString).map(collect); // TODO
@@ -52,6 +54,17 @@ export interface ItemAction<T extends ItemAction<T>> {
 }
 export interface ItemState<A, T extends ItemState<A, T>> {
   change(action: A): ItemState<A, T>;
+}
+
+export function evolving<T>(engine: MarbleEngine, evolve: (current: T) => Stream<T>, initial: T) {
+  const mimic$ = engine.mimic<T>();
+  const $ = mimic$
+    .fold((_, t) => evolve(t), evolve(initial))
+    .switch()
+    .map(x => {console.log(x); return x})
+    .fold((_, x) => x, initial);
+  mimic$.imitate($);
+  return $;
 }
 
 export type ItemCreator<T, A> = (props: ItemProps<A>) => T;

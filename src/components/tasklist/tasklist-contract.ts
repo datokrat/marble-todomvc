@@ -1,7 +1,7 @@
 import {VNode} from "@cycle/dom";
 import {Stream, MarbleEngine} from "marble-engine";
 import {DOMSource} from "../../adapt";
-import {Sinks as TaskSinks, TodoItemAction} from "../task/task-contract";
+import {Sinks as TaskSinks, TodoItemAction, TaskWithDom} from "../task/task-contract";
 import {ArrayStream, ItemState, ItemAction} from "../../marbleutils";
 
 export interface State {
@@ -11,15 +11,22 @@ export interface State {
   filterFn: Stream<() => boolean>;
 }
 
-export interface Action {
-  type: string;
-  payload?: any;
-  title?: string;
+export type Action = { type: "removeTodos", indices: number[] }
+ | { type: "insertTodo", payload: string }
+ | UpdateInputValueAction;
+
+export interface UpdateInputValueAction {
+  type: "updateInputValue";
+  payload: string;
+}
+
+export interface InternalSources {
+  DOM: DOMSource;
+  children: TaskSinks[];
 }
 
 export interface Sources {
   DOM: DOMSource;
-  remove$: Stream<number[]>;
 }
 
 export interface Sinks {
@@ -33,6 +40,13 @@ export interface ModelOut {
   filterFn: Stream<() => boolean>;
 }
 
-export type Intent = (sources: Sources) => Stream<Action>;
+export interface ConcreteItemModelOut<T> {
+  inputValue: string;
+  list: T[];
+  filter: string;
+  filterFn: () => boolean;
+}
+
+export type Intent = (sources: InternalSources) => Stream<Action>;
 export type Model = (intent: Stream<Action>) => ModelOut;
-export type TaskList = (model: Model, view: any, intent: Intent) => (sources: Sources) => Sinks;
+export type View = (model: Stream<ConcreteItemModelOut<TaskSinks>>) => Stream<VNode>;
